@@ -100,9 +100,10 @@ void hid_task(void) {
 
 }
 // Invoked when received control request with VENDOR TYPE
-bool tud_vendor_control_request_cb(uint8_t rhport, tusb_control_request_t const * request) {
+bool tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage, tusb_control_request_t const * request) {
     printf("DEBUG: tud_vendor_control_request_cb triggered\n");
     (void) rhport;
+    (void) stage;
     (void) request;
 
     return 0;
@@ -121,9 +122,10 @@ bool tud_vendor_control_complete_cb(uint8_t rhport, tusb_control_request_t const
 // Invoked when received GET_REPORT control request
 // Application must fill buffer report's content and return its length.
 // Return zero will cause the stack to STALL request
-uint16_t tud_hid_get_report_cb(uint8_t report_id, hid_report_type_t report_type, uint8_t *buffer, uint16_t reqlen) {
+uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t *buffer, uint16_t reqlen) {
     // TODO not Implemented
     printf("DEBUG: tud_hid_get_report_cb triggered\n");
+    (void) instance;
     (void) report_id;
     (void) report_type;
     (void) buffer;
@@ -133,8 +135,9 @@ uint16_t tud_hid_get_report_cb(uint8_t report_id, hid_report_type_t report_type,
 }
 // Invoked when received SET_REPORT control request or
 // received data on OUT endpoint ( Report ID = 0, Type = 0 )
-void tud_hid_set_report_cb(uint8_t report_id, hid_report_type_t report_type, uint8_t const *buffer, uint16_t bufsize) {
+void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t const *buffer, uint16_t bufsize) {
     printf("DEBUG: tud_hid_set_report_cb triggered\n");
+    printf("DEBUG: instance: %X\n", instance);
     printf("DEBUG: report_id: %X\n", report_id);
     printf("DEBUG: report_type: %X\n", report_type);
     printf("DEBUG: bufsize: %d\n", bufsize);
@@ -149,7 +152,8 @@ void tud_hid_set_report_cb(uint8_t report_id, hid_report_type_t report_type, uin
         0x06, 0x04, 0x55, 0xff, 0xff, 0xff, 0x03, 0xeb
     };
 
-    if (strcmp(buffer, setup_request_string) == 0) {
+    if (bufsize == sizeof(setup_request_string) &&
+        memcmp(buffer, setup_request_string, sizeof(setup_request_string)) == 0) {
         printf("DEBUG: Matching setup request string, answering\n");
         const char setup_request_return[] = {
             0x30, 0x30, 0x30, 0x31, 0x50, 0x4c, 0x45, 0x4e,
@@ -180,6 +184,7 @@ void tud_hid_set_report_cb(uint8_t report_id, hid_report_type_t report_type, uin
         printf("\n - End \n");
     }
 
+    (void) instance;
     (void) report_id;
     (void) report_type;
     (void) buffer;
